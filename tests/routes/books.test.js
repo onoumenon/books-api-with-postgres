@@ -148,13 +148,14 @@ describe("Books", () => {
         .send({
           id: 5,
           title: "The Perennial Philosophy",
-          author: "Aldous Huxley"
+          author: "New Author"
         })
         .expect(202)
         .expect({
           id: 5,
           title: "The Perennial Philosophy",
-          author: "Aldous Huxley"
+          authorId: 5,
+          author: { id: 5, name: "New Author" }
         });
     });
 
