@@ -39,7 +39,7 @@ router
         return res.json(books);
       }
     } catch (err) {
-      return res.status(400).json(err);
+      return res.status(400).json(err.message);
     }
   })
   .post(verifyToken, async (req, res) => {
@@ -58,7 +58,7 @@ router
       });
       return res.status(201).json(updatedBook);
     } catch (err) {
-      return res.status(400).json(err);
+      return res.status(400).json(err.message);
     }
   });
 
@@ -85,15 +85,18 @@ router
 
       return res.status(202).json(result);
     } catch (err) {
-      return res.status(400).json(err);
+      return res.status(400).json(err.message);
     }
   })
-  .delete((req, res) => {
-    const book = oldBooks.find(b => b.id === req.params.id);
-    if (book) {
+  .delete(async (req, res) => {
+    try {
+      const book = await Book.destroy({ where: { id: req.params.id } });
+      if (!book) {
+        throw new Error("Book does not exist");
+      }
       res.sendStatus(202);
-    } else {
-      res.sendStatus(400);
+    } catch (err) {
+      res.status(400).json(err.message);
     }
   });
 
