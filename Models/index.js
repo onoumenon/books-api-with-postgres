@@ -1,7 +1,8 @@
 const Sequelize = require("sequelize");
 
 const sequelize = new Sequelize("books-api", "postgres", "Icy7Eunice", {
-  dialect: "postgres"
+  dialect: "postgres",
+  logging: false
 });
 
 const models = {

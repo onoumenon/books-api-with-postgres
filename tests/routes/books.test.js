@@ -1,28 +1,58 @@
 const request = require("supertest");
 const app = require("../../app");
-
-const { books } = require("../../data/db.json");
+const { sequelize } = require("../../Models");
+const createAuthorsAndBooks = require("../../seed");
 
 const route = (params = "") => {
   const path = "/api/v1/books";
   return `${path}/${params}`;
 };
 
+beforeAll(async () => {
+  await sequelize.sync({ force: true });
+  await createAuthorsAndBooks();
+});
+
+afterAll(async () => {
+  await sequelize.close();
+});
+
 describe("Books", () => {
   describe("[GET] Search for books", () => {
+    const verifyBooks = (res, expected) => {
+      const books = res.body;
+      books.forEach((book, index) => {
+        expect(book.title).toEqual(expected[index].title);
+        expect(book.author.name).toEqual(expected[index].author.name);
+      });
+    };
+    const expectedBooks = [
+      { id: 1, title: "Animal Farm", author: { name: "George Orwell" } },
+      { id: 2, title: "1984", author: { name: "George Orwell" } },
+      {
+        id: 3,
+        title: "Homage to Catalonia",
+        author: { name: "George Orwell" }
+      },
+      {
+        id: 4,
+        title: "The Road to Wigan Pier",
+        author: { name: "George Orwell" }
+      },
+      {
+        id: 5,
+        title: "Brave New World",
+        author: { name: "Aldous Huxley" }
+      },
+      { id: 6, title: "Fahrenheit 451", author: { name: "Ray Bradbury" } }
+    ];
+
     test("returns all books", () => {
       return request(app)
         .get(route())
         .expect("content-type", /json/)
         .expect(200)
-        .expect([
-          { id: "1", title: "Animal Farm", author: "George Orwell" },
-          { id: "2", title: "1984", author: "George Orwell" },
-          { id: "3", title: "Homage to Catalonia", author: "George Orwell" },
-          { id: "4", title: "The Road to Wigan Pier", author: "George Orwell" },
-          { id: "5", title: "Brave New World", author: "Aldous Huxley" },
-          { id: "6", title: "Fahrenheit 451", author: "Ray Bradbury" }
-        ]);
+        .then(res => verifyBooks(res, expectedBooks));
     });
 
     test("returns books matching the title query", () => {
@@ -31,7 +61,14 @@ describe("Books", () => {
         .query({ title: "1984" })
         .expect("content-type", /json/)
         .expect(200)
-        .expect([{ id: "2", title: "1984", author: "George Orwell" }]);
+        .expect([
+          {
+            id: 2,
+            title: "1984",
+            authorId: 1,
+            author: { id: 1, name: "George Orwell" }
+          }
+        ]);
     });
 
     test("returns books matching the author query", () => {
@@ -41,10 +78,30 @@ describe("Books", () => {
         .expect("content-type", /json/)
         .expect(200)
         .expect([
-          { id: "1", title: "Animal Farm", author: "George Orwell" },
-          { id: "2", title: "1984", author: "George Orwell" },
-          { id: "3", title: "Homage to Catalonia", author: "George Orwell" },
-          { id: "4", title: "The Road to Wigan Pier", author: "George Orwell" }
+          {
+            id: 1,
+            title: "Animal Farm",
+            authorId: 1,
+            author: { id: 1, name: "George Orwell" }
+          },
+          {
+            id: 2,
+            title: "1984",
+            authorId: 1,
+            author: { id: 1, name: "George Orwell" }
+          },
+          {
+            id: 3,
+            title: "Homage to Catalonia",
+            authorId: 1,
+            author: { id: 1, name: "George Orwell" }
+          },
+          {
+            id: 4,
+            title: "The Road to Wigan Pier",
+            authorId: 1,
+            author: { id: 1, name: "George Orwell" }
+          }
         ]);
     });
   });
@@ -76,11 +133,9 @@ describe("Books", () => {
         .send({ title: "The Handmaid's Tale", author: "Margaret Atwood" })
         .expect(201)
         .then(res => {
-          expect(res.body).toEqual({
-            id: expect.any(String),
-            title: "The Handmaid's Tale",
-            author: "Margaret Atwood"
-          });
+          const book = res.body;
+          expect(book.title).toBe("The Handmaid's Tale");
+          expect(book.author.name).toBe("Margaret Atwood");
         });
     });
   });
