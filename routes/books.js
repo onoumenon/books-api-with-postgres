@@ -1,7 +1,6 @@
-const uuid = require("uuid/v4");
 const express = require("express");
 const router = express.Router();
-const { books: oldBooks } = require("../data/db.json");
+
 const { Book, Author } = require("../Models");
 
 const verifyToken = (req, res, next) => {
