@@ -1,6 +1,7 @@
 module.exports = {
   development: {
     username: "postgres",
+    //INSERT PASSWORD BELOW FOR APP TO WORK
     password: "",
     database: "books-api",
     options: {
